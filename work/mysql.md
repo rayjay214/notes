@@ -1,0 +1,67 @@
+# sql related
+
+## 增加权限
+`grant all on *.* to "gns_rw"@"%" identified by '2f0gNsDbWriTExy7s';`<br>
+`grant all on 192.168.7.* to "gpsbox_prod_rw"@"%" identified by 'pVwO8sNbh4QpBIAI';`<br>
+`grant select on *.* to "gpsbox_prod_r"@"%" identified by 'CkephhAz6uZJmbuV';`<br>
+**记得执行flush privileges让权限生效**
+
+## 关联表更新语句
+```
+update t_user_extend
+  INNER JOIN t_user ON t_user.USER_ID = t_user_extend.USER_ID
+  set t_user_extend.out_time='2030-06-25 00:00:00'
+  where t_user.SCHOOL_ID=3108780;
+```
+
+## 修改表结构
+```
+ALTER TABLE tb_article MODIFY COLUMN NAME CHAR(50);
+ALTER TABLE tb_article ADD COLUMN name1 VARCHAR(30); 
+ALTER TABLE tb_article CHANGE name1 name2 VARCHAR(30);
+ALTER TABLE tb_article DROP COLUMN name2;
+```
+
+## 导出表
+1. 导出数据库所有表结构<br>
+`mysqldump -uroot -pgoome -d dbname -P4000>db.sql;`
+2. 导出某张表的表结构<br>
+`mysqldump -uroot -pgoome -d dbname test -P4000>db.sql;`
+3. 导出数据库所有表结构及数据<br>
+`mysqldump -uroot -pgoome dbname -P4000>db.sql;`
+4. 导出某张表的表结构及数据<br>
+`mysqldump -uroot -pgoome mydbname test -P4000>db.sql;`
+
+## 插入主键冲突则更新
+`INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19;`
+
+# 维护相关
+
+## 查看主从关系
+`show slave status\G;`
+
+## 查看同步方式
+`show variables like 'binlog_format';`
+
+
+# 原理、思想相关
+## 事务
+[事务隔离级别](https://www.jianshu.com/p/4e3edbedb9a8)
+
+## binlog
+- [binlog文件解析](https://blog.csdn.net/sgbfblog/article/details/50444822)
+- [An API for Reading the MySQL Binary Log](http://assets.en.oreilly.com/1/event/61/Binary%20log%20API_%20A%20Library%20for%20Change%20Data%20Capture%20using%20MySQL%20Presentation.pdf)
+- [binlog解析工具的思想](https://www.jianshu.com/p/be3f62d4dce0)
+
+## 同步的疑问
+主主同步最好用statement？<br>
+主从同步用row？<br>
+row同步有时会产生多余数据？update找不到对应行的时候会insert。
+
+
+# 工具相关
+
+## DBeaver配置mysql client
+[详情看这里](https://blog.csdn.net/ngl272/article/details/70217499)
+
+
