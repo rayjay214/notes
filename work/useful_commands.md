@@ -42,3 +42,7 @@ ps -eo pid,lstart,cmd
 ## 查找一个文件中存在，另一个文件中不存在的内容
 diff file2 file1 | grep '^>' | sed 's/^>\ //'
 diff --new-line-format="" --unchanged-line-format=""  <(sort file1) <(sort file2)
+
+## bash，时间戳日期转换
+date -d "2018-02-02 00:00:00" "+%s"
+date -d @1519228800
