@@ -37,7 +37,7 @@ FCGI_Processor::FCGI_Processor(void): m_queryMap()
     {
         m_queryMap.insert(store_type::value_type(iterE->getName(), iterE->getValue()));
     }
-    cgicc::const_file_iterator  iterF; 
+    cgicc::const_file_iterator iterF;
     for(iterF = cgi.getFiles().begin(); iterF != cgi.getFiles().end(); ++iterF) 
     {
         m_queryMap.insert(store_type::value_type(iterF->getName(), iterF->getData()));
@@ -62,8 +62,42 @@ FCGI_Processor::FCGI_Processor(void): m_queryMap()
 }
 ```
 
-fcgi在初始化的时候（FCGI_Processor构造函数），会通过cgicc提取http请求的各种数据放在
-m_httpHeader, m_queryMap, m_postdata中供后续FCGI_Processor的子类使用
+**注意，这里的cgicc::const_file_iterator，它会将用户上传的文件内容以二进制的方式提取出来**
+- getName: Get the name of the form element.The name of the form element is specified in the HTML form that called the CGI application.
+- getData: Get the file data.This returns the raw file data as a string
+
+FCGI_Accepter是一个模板类，在其静态的dispatch方法里，会接收http的请求
+```
+template <typename TPROC>
+class FCGI_Accepter 
+{
+public:
+    static void dispatch(const bool bIsTboCgi=false)
+    {
+        FCGX_Request request;
+        FCGX_Init();
+        FCGX_InitRequest(&request, 0, 0);
+        int iRet;
+        while ((iRet = FCGX_Accept_r(&request)) == 0)
+        {
+            FCGI_stdin->stdio_stream = NULL;
+            FCGI_stdin->fcgx_stream = request.in;
+            FCGI_stdout->stdio_stream = NULL;
+            FCGI_stdout->fcgx_stream = request.out;
+            FCGI_stderr->stdio_stream = NULL;
+            FCGI_stderr->fcgx_stream = request.err;
+            // counter
+            ++_reqs;
+            FCGI_Processor::fcgi_request = request;
+            // invoke function object
+            TPROC TboProcObj(bIsTboCgi);
+            TboProcObj();
+        }
+    }
+    ...
+}
+```
+每接收到一个请求，框架就会创建一个TPROC, 这个TPROC是继承自FCGI_Processor的，在FCGI_Processor的构造函数中，就完成了上述的使用cgicc解析表单数据，并填进q_map的过程。
 
 
 
