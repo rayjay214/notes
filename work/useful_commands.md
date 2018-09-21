@@ -1,5 +1,7 @@
 ## 查看hadoop streamming帮助
-`hadoop jar /opt/cloudera/parcels/CDH-5.8.5-1.cdh5.8.5.p0.5/lib/hadoop-mapreduce/hadoop-streaming.jar -info|less`
+```
+hadoop jar /opt/cloudera/parcels/CDH-5.8.5-1.cdh5.8.5.p0.5/lib/hadoop-mapreduce/hadoop-streaming.jar -info|less
+```
 
 ## 端口转发
 ssh -CfNg -L 8300:192.168.7.104:5000 -p 60103 common@183.60.142.144
@@ -21,9 +23,9 @@ find . -name "*reload*" | xargs sed -i -e 's/\/data\/carol/\/home\/common\/lite/
 `sed -i -e 's/192.168.1.41/192.168.1.43/g' *.cfg`
 
 ## 计算access_token的步骤
-加密的签名，算法为:md5(md5(经销商账号的密码) + time)，md5值使用32位小写字符串
-用date +%s得到当前的时间戳
-`date -d "2010-10-02" "+%s"`
+加密的签名，算法为:md5(md5(经销商账号的密码) + time)，md5值使用32位小写字符串<br>
+用date +%s得到当前的时间戳<br>
+`date -d "2010-10-02" "+%s"`<br>
 根据上面的公式，通过[此网站](https://md5jiami.51240.com/)算出token
 
 ## Finder前往文件夹
