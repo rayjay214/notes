@@ -1,6 +1,7 @@
 # CGI Framework
 ## CGI Framework中使用到的库
 - [FCGI](http://www.nongnu.org/fastcgi/)
+- [FCGI Alternatives](https://stackoverflow.com/questions/1774647/fastcgi-for-c)
 - [CGICC](http://www.gnu.org/software/cgicc/doc/index.html)<br>
 cgicc是一个用来提取传过来的表单数据，cookie数据的工具库, 解析过程如下:<br>
 ```
