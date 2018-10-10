@@ -30,7 +30,7 @@ ALTER TABLE tb_article DROP COLUMN name2;
 3. 导出数据库所有表结构及数据<br>
 `mysqldump -uroot -pgoome dbname -P4000>db.sql;`
 4. 导出某张表的表结构及数据<br>
-`mysqldump -uroot -pgoome mydbname test -P4000>db.sql;`
+`mysqldump -uroot -pgoome mydbname t1 t2 t3 -P4000>db.sql;`
 
 ## 插入主键冲突则更新
 `INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19;`
