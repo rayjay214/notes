@@ -43,6 +43,8 @@ ALTER TABLE tb_article DROP COLUMN name2;
 ## 查看同步方式
 `show variables like 'binlog_format';`
 
+## 配置同步遇到的问题
+同步时遇到1594错误，可能是主从库的mysqlbinlog的版本不一致，如5.6对应的是3.4，5.5对应的是3.3。按照网上的说法，高版本同步到低版本是没问题，低版本同步到高版本可能会有问题。
 
 # 原理、思想相关
 ## 事务
