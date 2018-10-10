@@ -36,6 +36,14 @@ ALTER TABLE tb_article DROP COLUMN name2;
 `INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19;`
 
 # 维护相关
+## 多实例(端口)启动
+- 查看实例运行状态: /usr/local/mysql/bin/mysqld_multi report
+- 启动某实例: /usr/local/mysql/bin/mysqld_multi start 4000
+- 停止某实例: /usr/local/mysql/bin/mysqld_multi stop 4000
+
+配置文件默认是/etc/my.cnf，其中通过[xxxx]符号区分不同实例
+
+ps:启动失败可能是由于环境变量未添加, export PATH=$PATH:/usr/local/mysql/bin
 
 ## 查看主从关系
 `show slave status\G;`
