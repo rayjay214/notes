@@ -35,6 +35,26 @@ ALTER TABLE tb_article DROP COLUMN name2;
 ## 插入主键冲突则更新
 `INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19;`
 
+## 如果记录不存在则插入
+pk is not auto increment
+```
+INSERT IGNORE INTO list 'code' = 'ABC', 'name' = 'abc','place' = 'Johannesburg',;
+```
+pk is auto increment
+```
+INSERT INTO list (code, name, address,)
+SELECT 'ABC', 'ABC name', 'Johannesburg'
+FROM list
+WHERE NOT EXISTS(
+    SELECT code, name, address
+    FROM list
+    WHERE code = 'ABC'
+	AND name = 'ABC name'
+	AND address = 'Johannesburg'
+)
+LIMIT 1
+```
+
 # 维护相关
 ## 多实例(端口)启动
 - 查看实例运行状态: /usr/local/mysql/bin/mysqld_multi report
