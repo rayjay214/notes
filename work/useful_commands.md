@@ -50,3 +50,6 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 ## bash，时间戳日期转换
 `date -d "2018-02-02 00:00:00" "+%s"`
 `date -d @1519228800`
+
+## 换行替换成comma
+cat input.txt | tr '\n' ','
