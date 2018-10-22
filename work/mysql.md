@@ -82,6 +82,7 @@ ps:启动失败可能是由于环境变量未添加, export PATH=$PATH:/usr/loca
 - [binlog文件解析](https://blog.csdn.net/sgbfblog/article/details/50444822)
 - [An API for Reading the MySQL Binary Log](http://assets.en.oreilly.com/1/event/61/Binary%20log%20API_%20A%20Library%20for%20Change%20Data%20Capture%20using%20MySQL%20Presentation.pdf)
 - [binlog解析工具的思想](https://www.jianshu.com/p/be3f62d4dce0)
+- [binlog伪造slave（gblq）原理](http://blog.51cto.com/11461240/1765412)
 
 ## 同步的疑问
 主主同步最好用statement？<br>
