@@ -103,9 +103,9 @@ public:
 ```
 typedef struct _FUNCITEM
 {
-	std::string strMethod;
+    std::string strMethod;
     std::string strPrxBoName;
-	BaseProcessor *pProcessor;
+    BaseProcessor *pProcessor;
 } FUNC_ITEM;
 
 FUNC_ITEM g_funcs[] = 
@@ -126,7 +126,7 @@ FUNC_ITEM g_funcs[] =
     //cppbo
     {"GetDataService", "goocarProxy", &g_ServantProcessor},
 
-	//IoTBo
+    //IoTBo
     {"IoTquery", "goocarProxy", &g_ServantProcessor},
 
     //configbo
@@ -144,6 +144,9 @@ FUNC_ITEM g_funcs[] =
 };
 ```
 Processor(ServantProcessor)是继承自BaseProcessor的，BaseProcessor实现了两个重要的虚函数preHandle和process，preHandle中做一些基本的校验，如:session是否过期，process就是通过其成员变量(m_ProxyBoPrx)调用Proxy服务Ice接口的过程。
+
+## 疑问
+关于cgi框架，一直有一个未解的疑问，为什么编译的时候要编译FCgiIO.cpp和fcgio.cpp这两个文件呢，这两个文件中FCgiIO.cpp是cgicc这个库的，fcgio.cpp是fcgi这个库的，重新编译想必是对源码有修改，在苦查资料之后，发现作者当时可能遇到了这个问题[fcgi编译错误](https://stackoverflow.com/questions/4577453/fcgio-cpp50-error-eof-was-not-declared-in-this-scope), 查看我们自己的fcgio.cpp文件，确实发现增加了一行#include <stdio.h>。在去github上找这个项目的源码对照，发现fcgio.cpp这个文件已经增加了#include <stdio.h>这行，看这个文件的历史修改记录，原来这行是2017年新加上去的[fcgio.cpp修改](https://github.com/FastCGI-Archives/fcgi2/commit/122e55cc354dd4a78849aed8d36c61ed9edeaeb2#diff-5302ed059d26979ddd727918b70ae46e), 现在若要使用最新的libfcgi库，想必就不用重新编译这两个文件了。
 
 
 # GLogin
