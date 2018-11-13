@@ -51,5 +51,12 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 `date -d "2018-02-02 00:00:00" "+%s"`
 `date -d @1519228800`
 
-## 换行替换成comma
-cat input.txt | tr '\n' ','
+## bash字符串替换
+### 换行替换成comma
+`cat input.txt | tr '\n' ','`
+
+### double quote to comma, then eliminate the whitespace
+`cat wireless.txt |tr '"' ' '|tr -d ' '`
+
+
+
