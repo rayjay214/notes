@@ -152,7 +152,7 @@ Processor(ServantProcessor)是继承自BaseProcessor的，BaseProcessor实现了
 # GLogin
 
 ## 浏览器登录
-- 请求到loginCgi，浏览器登录对应的方法名是loginSystem
+- 请求到loginCgi，浏览器登录对应的方法名是loginSystem(app端登录/1/auth/access_token在获取sign的时候，执行的其实也是proxy的loginSystem)
 - ice调用loginproxy，对应执行的方法是LoginBO::login，其中要设置sign的几个基本标志
 ```
 SIGN_MEMBER_T signType;
@@ -269,7 +269,7 @@ std::string LoginBO::FormatEntValue(::pb::Customer &eInfo, SIGN_MEMBER_T &signTy
     Goome::ReplaceStr(strBuf, "#null#", "##");
     return strBuf + "#" + signValue;
 }
-//
+//以TLV方式保存sign信息，长度固定占两个字节，如长度为7则表示为07
 int SIGN_MEMBER_T2String(const SIGN_MEMBER_T &signValue, std::string &tag)
 {
     char sz[128] = ""; 
@@ -288,7 +288,7 @@ int SIGN_MEMBER_T2String(const SIGN_MEMBER_T &signValue, std::string &tag)
     return ERR_OK;
 }
 ```
-
+- loginCgi收到loginProxy发回的请求，解析出账号的基本信息如eid，login_name等，根据账号的grade以及eid，设置homepage。之后设置返回给浏览器的cookie。
 
 # MysqlSync
 
