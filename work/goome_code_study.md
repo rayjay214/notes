@@ -151,6 +151,145 @@ Processor(ServantProcessor)是继承自BaseProcessor的，BaseProcessor实现了
 
 # GLogin
 
+## 浏览器登录
+- 请求到loginCgi，浏览器登录对应的方法名是loginSystem
+- ice调用loginproxy，对应执行的方法是LoginBO::login，其中要设置sign的几个基本标志
+```
+SIGN_MEMBER_T signType;
+// 初始化SIGN_MEMBER_T结构，并赋值
+{
+    // Set signType.signVersion
+    signType.signVersion = DEFAULT_SIGN_VERSION; //2
+    // Set signType.traceLog
+    signType.traceLog = TRACE_LOG_UNSET; //0
+    if ( !param["tracelog"].empty() && param["tracelog"] == TRACE_LOG_SET )
+    {
+        signType.traceLog = TRACE_LOG_SET; //1
+    }
+    // Set signType.time
+    signType.time = _time;
+    // Set signType.retainByte
+    signType.retainByte =  DEFAULT_RETAIN_BYTE;
+}
+```
+- 调用Glname的方法，获取登录账户的基本信息，账户类型可以包含，账号名，设备名，虚拟账户名，imei号,车牌号这几种
+```
+// 尝试设备别名，用户名和虚拟账户名登陆，失败不退出
+LNAME_CARBINET_INFO lnameRecord;
+int ret = GlnameOp::GetRecordByLname(loginParam.loginName, lnameRecord);
+// type: 1: t_user; 2: t_enterprise; 3: t_account
+// 设备别名登陆
+if( lnameRecord.type == 1 )
+{
+    checkUserIdentity(ToString(lnameRecord.uid), loginParam.domain, loginParam.pwd, signType, resValue);
+}
+// 用户名登陆
+else if( lnameRecord.type == 3 )
+{
+    checkEntIdentity(ToString(lnameRecord.uid), loginParam.domain, loginParam.pwd, signType, resValue);
+}
+// 虚拟账户名登陆
+else if( lnameRecord.type == 2 )
+{
+    checkAccountIdentity(ToString(lnameRecord.uid), loginParam.domain, loginParam.pwd, signType, resValue);
+}
+
+if ("USER" == loginParam.loginType)
+{
+if( loginParam.loginName.length() > IEMI_LENGTH_LIMIT )
+{
+    // 尝试IMEI号登陆
+    IMEI_CARBINET_INFO imeiInfo;
+    int ret = GimeiOp::GetRecordByImei(loginParam.loginName, imeiInfo);
+    if( ret == ERR_OK )
+    {
+        checkUserIdentity(ToString(imeiInfo.uid), loginParam.domain, loginParam.pwd, signType, resValue);    
+    }
+}
+
+// 全部数字，尝试设备Id登陆，失败不退出
+if( isNumber(loginParam.loginName) == true )
+{
+    checkUserIdentity(loginParam.loginName, loginParam.domain, loginParam.pwd, signType, resValue);
+}
+else
+// 非数字，尝试车牌号登陆，失败不退出
+{
+    checkPlateIdentity(loginParam.loginName, loginParam.domain ,loginParam.pwd, signType, resValue);
+}
+```
+- 通过checkXXXIdentity方法获取账号的基本信息和sign并返回给cgi，已checkEntIdentity为例
+首先校验pwd，自定义域名等信息check_pwd_old，judgeLocalUserLogin，之后通过FormatEntValue方法构造sign以及账号基本信息
+```
+std::string LoginBO::FormatEntValue(::pb::Customer &eInfo, SIGN_MEMBER_T &signType)
+{
+    std::string eid    = ToString(eInfo.mutable_base()->id());
+    std::string grade  = eInfo.mutable_extend()->grade();
+
+    // Set signType.userType
+    signType.userType = ENT_TYPE_FLAT;
+    // Set signType.userID
+    signType.userID = eid;
+    // 用户类型 + 用户账号 + 时间（10字节） + 32位md5 
+    // Set signType.sign
+    std::string rawData = signType.userType + eid + signType.time + g_conf.signKey;
+    if ( MakeMD5(rawData, signType.sign) != ERR_OK )
+    {
+        MYLOG_WARN(g_logger, "FormatUserValue rawData MD5 Failed[%s]", rawData.c_str());
+    }
+    // Set signType.userGrade
+    signType.userGrade = grade;
+    std::string signValue;
+    SIGN_MEMBER_T2String(signType, signValue);
+
+    std::string strBuf;
+    strBuf.append(eid); 
+    strBuf.append("#"); 
+    strBuf.append(ToString(eInfo.mutable_base()->pid())); 
+    strBuf.append("#"); 
+    strBuf.append(eInfo.mutable_base()->name()); 
+    strBuf.append("#"); 
+    strBuf.append(eInfo.mutable_base()->phone()); 
+    strBuf.append("#"); 
+    strBuf.append(eInfo.mutable_base()->login_name()); 
+    strBuf.append("#"); 
+    strBuf.append(eInfo.mutable_base()->email()); 
+    strBuf.append("#"); 
+    strBuf.append(eInfo.mutable_base()->addr()); 
+    strBuf.append("#"); 
+    strBuf.append("***"); 
+    strBuf.append("#"); 
+    // status字段没什么用，直接改成grade
+    strBuf.append(eInfo.mutable_extend()->grade());
+    strBuf.append("#");  
+    strBuf.append(eInfo.mutable_base()->create_time() + ".000");
+    strBuf.append("#"); 
+
+    Goome::ReplaceStr(strBuf, "#NULL#", "##");
+    Goome::ReplaceStr(strBuf, "#null#", "##");
+    return strBuf + "#" + signValue;
+}
+//
+int SIGN_MEMBER_T2String(const SIGN_MEMBER_T &signValue, std::string &tag)
+{
+    char sz[128] = ""; 
+    snprintf(sz,sizeof(sz), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+             signValue.signVersion.c_str(), signValue.userType.c_str(), 
+             getLengthString(signValue.userID).c_str(), signValue.userID.c_str(), 
+             getLengthString(signValue.time).c_str(), signValue.time.c_str(),
+             getLengthString(signValue.sign).c_str(), signValue.sign.c_str(), 
+             getLengthString(signValue.accountID).c_str(), signValue.accountID.c_str(), 
+             getLengthString(signValue.virtrualAccount).c_str(), signValue.virtrualAccount.c_str(), 
+             getLengthString(signValue.traceLog).c_str(), signValue.traceLog.c_str(),
+             getLengthString(signValue.userGrade).c_str(), signValue.userGrade.c_str(), 
+             getLengthString(signValue.retainByte).c_str(), signValue.retainByte.c_str());
+    tag = std::string(sz);
+
+    return ERR_OK;
+}
+```
+
+
 # MysqlSync
 
 
