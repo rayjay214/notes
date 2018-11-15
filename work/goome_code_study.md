@@ -289,6 +289,166 @@ int SIGN_MEMBER_T2String(const SIGN_MEMBER_T &signValue, std::string &tag)
 }
 ```
 - loginCgi收到loginProxy发回的请求，解析出账号的基本信息如eid，login_name等，根据账号的grade以及eid，设置homepage。之后设置返回给浏览器的cookie。
+```
+std::string loginByEnterprise(store_type &param, http_header_t &m_httpHeader, 
+                              session_content_t &sessionVO, 
+                              const std::string _locateStr, bool axaxLoginFlat)
+{
+    std::string _retStr;
+    std::string _cookieStr;
+    int ret = commitPrxBo(param, _retStr);
+    
+    enterprise_t eVO;
+
+    param["cookie_sign"] = eVO.sign;
+    _cookieStr = setCookie("session", m_httpHeader.sessionKey, m_httpHeader); 
+    _cookieStr += setCookie("user", "\""+eVO.id + "," + UrlEncode(UrlEncode(eVO.name))+"\"", m_httpHeader); 
+    _cookieStr += setCookie("sign", eVO.sign, m_httpHeader);
+    _cookieStr += setCookie("group", g_gns_shard_id, m_httpHeader);
+    _cookieStr += setCookie("psip", m_httpHeader.httpHost, param["accessUrl"], "/");
+
+    sessionVO.eUserID    = eVO.id;
+    sessionVO.eUserIDing = eVO.id;
+    sessionVO.loginURL   = param["url"];
+    sessionVO.ecarServiceURL = ECAR_SERVICE_MWO;
+    sessionVO.sessionKey = m_httpHeader.sessionKey;
+
+    std::string lang;
+    lang = param["locale"].empty() ? m_httpHeader.locale : param["locale"] ;
+    if( lang.empty() )
+    {
+        lang = "zh-cn";
+        std::size_t found = m_httpHeader.httpHost.find("cootrack");
+        if( found!=std::string::npos )
+            lang = "en-us";
+    }
+    sessionVO.locale = ( lang == "en-us") ? "en" : "cn";
+
+    // 客户类型(1.特殊类型，4.经销商 8.终端客户 6.租赁 7.物流 5.汽修厂)
+    sessionVO.grade ="8";
+    if( !eVO.grade.empty() )
+    {
+         sessionVO.grade = eVO.grade;
+    }
+    MYLOG_INFO(logger, "loginByEnterprise Session Grade is [%s]", sessionVO.grade.c_str()); 
+
+    // addr字段存放的是登陆次数
+    if( eVO.addr.empty() ==  false )
+         sessionVO.permission = eVO.addr;
+
+    // 看来自的请求，如果来自警察专用的区域回放系统，那么跳转到 poliz文件夹
+    std::size_t found = param["url"].find(JC_AREA_PLAY_BACK_DOMAIN);
+    if( found!=std::string::npos )
+    {
+        sessionVO.eVODealer = "OK";
+        sessionVO.homePage = REDIRECTOR_PATH_POLIZ;
+        setSession(param, m_httpHeader.sessionKey, sessionVO);
+        MYLOG_INFO(logger, "loginByEnterprise [%s] Login Redirect To /poliz", eVO.id.c_str()); 
+        return _cookieStr + retRedirect(REDIRECTOR_PATH_POLIZ, _locateStr);
+    }
+
+    std::string homePage = REDIRECTOR_PATH_USER;
+    // 客户级别：6:租赁 7:物流 8:终端客户
+    if( sessionVO.grade == "6" || sessionVO.grade == "7" || sessionVO.grade == "8")
+    {
+        sessionVO.eID = eVO.id;
+        homePage = REDIRECTOR_PATH_USER;        
+        MYLOG_INFO(logger, "loginByEnterprise [%s] Login Redirect To /user", eVO.id.c_str()); 
+    }
+    ...
+```
+
+- 生成sessionid，并设置session到redis中去
+```
+//sessionKey是登录预处理时设置的，每次调这个方法获取的值都是唯一的
+sessionKey = IceUtil::generateUUID();
+
+setSession(param, m_httpHeader.sessionKey, sessionVO);
+
+int setSession(store_type _setSessionParam, const std::string &sessionKey, session_content_t &sessionValues)
+{
+    sessionValues.permission = transChars(sessionValues.permission, std::string(";"), std::string("；"));
+
+    std::string _sessionStr;
+    _sessionStr  = sessionValues.loginURL       + ";";
+    _sessionStr += sessionValues.ecarServiceURL + ";";
+    _sessionStr += sessionValues.homePage       + ";";
+    _sessionStr += sessionValues.grade          + ";";
+    _sessionStr += sessionValues.virtualName    + ";";
+    _sessionStr += sessionValues.userNameORG    + ";";
+    _sessionStr += sessionValues.permission     + ";";
+    _sessionStr += sessionValues.eUserID        + ";";
+    _sessionStr += sessionValues.eUserIDing     + ";";
+    _sessionStr += sessionValues.eID            + ";";
+    _sessionStr += sessionValues.viewType       + ";";
+    _sessionStr += sessionValues.QQConnectState + ";";
+    _sessionStr += sessionValues.openID         + ";";
+    _sessionStr += sessionValues.token          + ";";
+    _sessionStr += sessionValues.QQUserInfo     + ";";
+    _sessionStr += sessionValues.userVO         + ";";
+    _sessionStr += sessionValues.eVODealer      + ";";
+    _sessionStr += sessionValues.locale         + ";";
+ 
+    std::string _retStr;
+    _setSessionParam["ICE_PARAM_SERVLET"] = "LoginService";
+    _setSessionParam["method"] = "setSession";
+    _setSessionParam["sessionID"] = sessionKey;
+    _setSessionParam["value"] = _sessionStr;
+
+    CSessionBO sBO;
+    _retStr = sBO.setSession(_setSessionParam);
+    ...
+ }
+ 
+int CSessionBO::putSessionRedis(const std::string& sid, const std::string& value)
+{
+    std::string key = RedisSessionKeyPrefix + sid;
+    if(!m_redis->SetEx(key, value, g_redis_expire_sec))
+    {		
+        return ERR_CALL_REDIS_FAIL;	
+    }
+    return ERR_OK;
+}
+```
+
+- session主要是给前端使用的，通过get_meta_js方法，就能获取很多session中保存的有用信息
+```
+nRet = getSessionRedis(sid, value);	
+if (nRet != ERR_OK)
+{
+    return nRet;
+}
+value = b64_decode_string(value);
+
+nRet = getSessionValue(value, stSession);
+
+//User
+GetUserVo(stSession);
+
+//Ent Delaer
+GetEnterpriseDealerVO(stSession);
+
+//Ent
+GetEnterpriseVO(stSession);
+
+GetEnterpriseGpsDayInfo(eid, stSession);
+```
+
+- 返回给浏览器是重定向后的地址，并带上刚才设置的cookie
+```
+...
+return _cookieStr + retRedirect(homePage, _locateStr, axaxLoginFlat);
+std::string retRedirect(const std::string path, const std::string host, bool axaxLoginFlat)
+{
+    std::string retRedir = "Location:" + host + path + "\r\n\r\n";
+
+    if( axaxLoginFlat == true )
+    {
+        retRedir = "\r\n" + host + path;
+    }
+    return retRedir;
+}
+```
 
 # MysqlSync
 
