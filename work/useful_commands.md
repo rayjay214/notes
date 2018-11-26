@@ -58,5 +58,15 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 ### double quote to comma, then eliminate the whitespace
 `cat wireless.txt |tr '"' ' '|tr -d ' '`
 
-
+## bash操作
+### 编辑常用快捷键
+```
+ctrl + w —往回删除一个单词，光标放在最末尾 
+ctrl + k —往前删除到末尾，光标放在最前面（可以使用ctrl+a） 
+ctrl + u 删除光标以前的字符 
+ctrl + k 删除光标以后的字符 
+ctrl + a 移动光标至的字符头 
+ctrl + e 移动光标至的字符尾 
+ctrl + l 清屏
+```
 
