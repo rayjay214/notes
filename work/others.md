@@ -11,3 +11,7 @@
 
 ## 关于字节，字符，编码
 [字节，字符，编码问题](http://www.regexlab.com/zh/encoding.htm)
+
+## VIM RELATED
+
+- 安装vimdiff yum install vim-enhanced
