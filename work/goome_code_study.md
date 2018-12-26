@@ -451,6 +451,52 @@ std::string retRedirect(const std::string path, const std::string host, bool axa
 }
 ```
 
+# 设备协议相关
+
+## 离线指令发送流程
+- 客户端发送请求（method=set&order_id=xxx&content=xxx）给平台。
+  OrderHandle.cpp中根据order_id在t_user_menu中找到指令的详细内容（url和remark字段），以及用户发送的content，构造指令完整内容。先将指令具体详情插入t_cmd_history表，得到sn（自动生成的id），再构造消息发送到downlink。
+```
+std::string OrderContent;
+std::string OrderName;
+if ( buildOrderContent(orderId, orderParam, OrderContent, OrderName) )
+{
+    MYLOG_WARN(g_logger, "invalid order id! login_id=%s, imei=%s, orderid=%s, orderparam=%s",
+        param["LOGIN_ID"].c_str(), imei.c_str(), orderId.c_str(), orderParam.c_str());
+    result = retJson(ERR_INVALIDATE_PARAM, IsInnerUser);
+    return ERR_INVALIDATE_PARAM;
+}
+
+std::string login_id = ("0"==param["LOGIN_TYPE"])?param["LOGIN_ID"]:"1";
+long orderGenId;
+
+if ( insertOrderRecord(user_id, login_id, OrderContent, OrderName, orderId, platform, orderGenId) )
+{
+    result = retJson(ERR_CALL_GUD_FAIL, IsInnerUser);
+    return ERR_CALL_GUD_FAIL;
+}
+
+std::string downLinkOrderMsg = pack2DownlinkOrderMsg(orderId, ToString(orderGenId), imei, OrderContent);
+g_pSyncToDownlinkThread->write(downLinkOrderMsg);
+```
+
+- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # GFS
 
 ## GFS简介
