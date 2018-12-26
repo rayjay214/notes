@@ -461,9 +461,6 @@ std::string OrderContent;
 std::string OrderName;
 if ( buildOrderContent(orderId, orderParam, OrderContent, OrderName) )
 {
-    MYLOG_WARN(g_logger, "invalid order id! login_id=%s, imei=%s, orderid=%s, orderparam=%s",
-        param["LOGIN_ID"].c_str(), imei.c_str(), orderId.c_str(), orderParam.c_str());
-    result = retJson(ERR_INVALIDATE_PARAM, IsInnerUser);
     return ERR_INVALIDATE_PARAM;
 }
 
@@ -472,29 +469,444 @@ long orderGenId;
 
 if ( insertOrderRecord(user_id, login_id, OrderContent, OrderName, orderId, platform, orderGenId) )
 {
-    result = retJson(ERR_CALL_GUD_FAIL, IsInnerUser);
     return ERR_CALL_GUD_FAIL;
 }
-
 std::string downLinkOrderMsg = pack2DownlinkOrderMsg(orderId, ToString(orderGenId), imei, OrderContent);
 g_pSyncToDownlinkThread->write(downLinkOrderMsg);
 ```
 
-- 
+- downlink接收到指令并尝试发送给设备，若无响应（设备不在线），则将指令发给ggw缓存
+handlerThread接收到ServantBo发来的消息后, 先将之前保存的指令改为已执行，之后将其放入离线指令处理线程发送队列（SetSendMap），然后将其放进自己的m_onlineMsgVec，并尝试发送消息。
+```
+msg_content_t msg_cnt;
+if (ParseMsg(m_msg, msg_cnt))
+{					
+    SetGgwEnd(strImei, EMPTY_GGW_IP);
+
+    std::string strKey = "gpsbox:OffLineInstr:" + strImei;
+    std::string strInst = GetInstrFromRedis(strKey);
+    //如果是指令，则先将数据库中已保存的离线指令置为已执行，保证新指令一定能覆盖旧指令
+    if (!strInst.empty() && msg_cnt.msgType == MSG_TYPE_INSTRCTION)
+    {
+        m_updateThread->UpdateInstrStateInDB(msg_cnt);
+    }
+    if (msg_cnt.msgType == MSG_TYPE_INSTRCTION)
+    {
+        instrInfo stInstrInfo = {m_msg, (uint64_t)time(0), "CPPBO"};
+        SetSendMap(devId, stInstrInfo);
+    }
+    std::string strType = GetDevType(strImei, devId);
+    StringSeq::iterator fIter = find(g_conf.commonInstrDevType.begin(), g_conf.commonInstrDevType.end(), strType);
+    if (fIter != g_conf.commonInstrDevType.end())
+    {						
+        m_commonInstrVec.push_back(m_msg);						
+    }
+    else
+    {						
+        IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(m_mutex_online);
+        m_onlineMsgVec.push_back(m_msg);
+        m_mutex_online.notify();
+    }
+}  
+if (time(0) - m_tLastSendCommonInstrTime > 3 && !m_commonInstrVec.empty())
+{
+    SendCommonInstrMsg();
+    m_tLastSendCommonInstrTime = time(0);
+}
+if (time(0) - lastTimeSendOnline > 3)
+{
+    if (!m_onlineMsgVec.empty())
+    {
+        SendOnlineMsg();					
+        lastTimeSendOnline = time(0);					
+    }				
+}
+```
+
+- OffLineInstrHandler线程从finishSend队列中取出刚才设置的指令（到了检查周期之后），将其放入待检查的vector，之后在待检查vector中通过t_cmd_history获取该指令的status，因为指令还未执行，这时status应该为0。若status=0，则将这条指令上报给所有的ggw去缓存，并且放入ready2SaveDB队列，之后replace into t_off_line_instr表。
+```
+bool COffLineHandlerThread::ProcessSentInstruction(const tbb::concurrent_unordered_map<uint32_t, instrInfo>& finishSendMap)
+{
+	tbb::concurrent_unordered_map<uint32_t, instrInfo> finishOfflineSendMap;
+	std::vector<std::string> strCheckIdVec;
+	
+	//判断已下发的指令是否支持离线指令，若支持离线指令，在规定时间内是否收到回复，若未收到回复，则通知GGW在下次设备上线时通知downlink下发该指令
+	for (tbb::concurrent_unordered_map<uint32_t, instrInfo> ::const_iterator itr = finishSendMap.begin(); itr!=finishSendMap.end(); itr++)
+	{
+		std::string strType;
+		std::string strSn;
+		//若获取不到相应的type和sn，则认为指令非法，不做离线指令的判断，对非指令不做离线指令判断
+		if (!GetJsonStringItem(itr->second.strContent, "type", strType) ||strType != MSG_TYPE_INSTRCTION || !GetJsonStringItem(itr->second.strContent, "sn", strSn)||strSn == "")
+		{
+			continue;
+		}
+	
+		std::string strDevType;
+		std::string strImei;
+		GetJsonStringItem(itr->second.strContent, "imei", strImei);
+		strDevType = GetDevType(strImei);
+	
+		//对GM08等udp设备，指令下发隔3s检查是否收到结果(在配置文件中配置)，其他的tcp连接设备隔15s检查
+		uint64_t checkInterval = g_conf.checkOfflineInterval;
+		std::string iotType;
+		bool iotForOfflineInstr = false;
+		if (GetJsonStringItem(itr->second.strContent, "iottype", iotType) &&
+			(iotType == "IOT"))
+		{
+			iotForOfflineInstr = true;
+		}
+		if (std::find(g_conf.udpOfflineInstr.begin(), g_conf.udpOfflineInstr.end(), strDevType) != g_conf.udpOfflineInstr.end())
+		{
+			checkInterval = g_conf.checkUdpOfflineInterval;
+		}
+	
+		time_t now = time(0);								
+		if(now - itr->second.recvCmdTime > checkInterval)
+		{
+			//仅对支持离线指令的设备类型判断指令下发是否成功，其他设备的指令一律视为在线已下发成功
+
+			//改为在线指令也要保存后，这条就可以不用判断了
+			if (!IsOfflineInstructionDevType(strDevType) && (iotForOfflineInstr == false))
+			{			
+				continue;
+			}
+			
+			strCheckIdVec.push_back(strSn);
+			finishOfflineSendMap.insert(*itr);
+		}
+		else
+		{
+			//未到规定检查间隔的，则继续等待
+			m_handlerThread->InsertIntoSendMap(itr);
+		}
+	}
+	
+	std::map<uint32_t, std::string> insStatusMap;
+	if (!strCheckIdVec.empty())
+	{
+		//查找数据库，获取指令执行结果
+		GetInstrStatusFromDB(strCheckIdVec,insStatusMap,m_gudPrx);
+	}
+	
+	std::map<std::string, msg_content_t> ready2SaveDB;
+	std::vector<msg_content_t> ready2UpdateDB;
+	
+	for(tbb::concurrent_unordered_map<uint32_t, instrInfo>::iterator itr = finishOfflineSendMap.begin(); itr != finishOfflineSendMap.end(); itr++)
+	{				
+		std::string strImei;
+		GetJsonStringItem(itr->second.strContent, "imei", strImei);
+		std::string strKey = "gpsbox:OffLineInstr:" + strImei;				
+		std::string strInstr = GetInstrFromRedis(strKey);
+		std::string strDevType = GetDevType(strImei);
+	
+		std::map<uint32_t, std::string>::iterator find_itr = insStatusMap.find(itr->first);
+	
+		//在t_cmd_history里找得到指令下发记录的离线指令才处理，否则一律认为指令下发已过期，不再处理(t_cmd_history表可能会定期清理)
+		MYLOG_DEBUG(logger,"ready to get cmd result for devId[%u]", itr->first);
+		if (find_itr != insStatusMap.end())
+		{
+			if (find_itr->second != "0")
+			{						
+				if (strInstr!="**nonexistent-key**")
+				{				
+					msg_content_t tmsg;
+					ParseMsg(strInstr,tmsg);
+					ready2UpdateDB.push_back(tmsg);
+					m_handlerThread->SetGgwEnd(strImei, EMPTY_GGW_IP);
+				}
+				else
+				{
+					MYLOG_DEBUG(logger,"invalid redis value found for key[%s], value[%s]", strKey.c_str(), strInstr.c_str());
+				}
+			}
+			else
+			{
+
+				//初始化的数据只用于通知ggw，刷新ggw缓存中的指令内容，不作重发处理
+				//只有支持离线指令的设备需要做重发，其他设备每次上报数据的时候发一次就足够了
+				if (itr->second.strCmdSrc.compare("INIT") != 0 && IsOfflineInstructionDevType(strDevType))
+				{
+					//未收到回复的离线指令加入重发队列，连续发三次
+					resendInfo rsi;
+					IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(m_monitor);
+					m_resendMap[strImei] = rsi;
+					m_monitor.notify();
+				}
+										
+				//通知GGW进入监控状态，检测保存离线指令的设备是否再次上线
+				if (!SendUnsucOfflineInfoToGGW(strImei))
+				{
+					MYLOG_DEBUG(logger,"failed in sending request to GGW for imei[%s]", strImei.c_str());
+				}
+				MYLOG_DEBUG(logger,"finish sending unsuccessful offline info to ggw, cmd src is:%s", itr->second.strCmdSrc.c_str());
+				if (itr->second.strCmdSrc.compare("CPPBO") == 0)
+				{
+					msg_content_t tmsg;
+					ParseMsg(itr->second.strContent,tmsg);
+					ready2SaveDB[itr->second.strContent] = tmsg;
+					// 新来的离线数据，存完数据库，往GGW发一份，用来更新GGW中的缓存
+					MYLOG_DEBUG(logger,"ready to send new offline to ggw");
+					SendNewCmd2GGW(tmsg);
+				}
+				else if (itr->second.strCmdSrc.compare("INIT") == 0)
+				{
+					//若配置文件中配置了需要初始化ggw中的离线指令缓存的话，就给ggw发送一份数据
+					msg_content_t tmsg;
+					ParseMsg(itr->second.strContent,tmsg);
+					MYLOG_DEBUG(logger,"ready to init new offline to ggw");
+					SendNewCmd2GGW(tmsg);
+				}
+			}
+		}
+		else
+		{
+			MYLOG_DEBUG(logger,"cannot find instruction for devid[%u]", itr->first);
+		}
+	}
+	
+	m_updateThread->SaveInDB(ready2SaveDB);
+	// 执行完的离线指令，也要给GGW发一份，用来清除GGW中的缓存
+	for (uint64_t i = 0; i < ready2UpdateDB.size(); i++)
+	{
+		m_updateThread->UpdateInstrStateInDB(ready2UpdateDB[i]);				
+		MYLOG_DEBUG(logger,"ready to send finished offline to ggw");
+		SendFinishedCmd2GGW(ready2UpdateDB[i]);
+	}		
+
+	return true;
+}
+```
+
+（最古老的方式，没用ggw缓存指令）
+- 在设备上线了之后，比如ggw收到了0x80包，除了给设备回响应之外，如果在缓存中发现了离线指令，还要给gpp发一个0x1111包。
+```
+if (hasOffline && reply)
+{
+    SendGm08ReplyMsg();
+    Send1111Package2Gpp(id, PROTNO_SEND_OFFLINE_INSTRUCTION);
+}
+```
+
+- Gpp收到0x1111消息之后，检查是否有离线指令，有的话发送json消息给downlink。
+```
+else if (INNER_1111_HEAD == *(uint16_t*)&str[0])
+{
+    if (*(uint8_t*)&str[3] == 0xA1 || *(uint8_t*)&str[3] == 0xA2)
+    {
+        return CheckAndSendOfflineInstruction(str);
+    }
+}
+
+bool CConsumerThread::CheckAndSendOfflineInstruction(const std::string& str)
+{
+    const INNER_LOGIN_MSG* pDestMsg = (const INNER_LOGIN_MSG*) str.c_str();
+
+	uint64_t imei = 0;
+	uint64_t devId = 0;
+	imei = ntoh64(pDestMsg->imei);
+	if(!GetDevId(imei, &devId))
+	{
+		return false;
+	}
+
+    if((uint64_t)g_pTracer->m_tracer.p2 == devId)
+    {
+        g_pTracer->DLog("uid==%lld, imei=%s, CheckAndSendOfflineInstruction 1111:", g_pTracer->m_tracer.p2, g_pTracer->m_tracer.p3.c_str());
+        DumpHex((uint8_t*)&str[0], str.size(), g_pTracer);    
+    }
+
+	std::string strImei;	
+    std::string strOfflineInstr;
+    MYCOM::ImeiDecToHex(imei, strImei);
+
+	MYLOG_DEBUG(logger,"ready to get offline instruction for strImei[%s]", strImei.c_str());
+
+	bool hasOfflineInstr = GetOffLineInstrFromRedis(strImei, strOfflineInstr);
+	if (hasOfflineInstr)
+	{
+		MYLOG_INFO(logger,"offline instruction found for imei[%s], instruction[%s], send to downlink", strImei.c_str(), strOfflineInstr.c_str());
+		std::string strGgwEnd = GetGgwIp();		
+
+		rapidjson::StringBuffer strbuf;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+		rapidjson::Document root;
+		rapidjson::Document::AllocatorType& allocator = root.GetAllocator();
+		root.SetObject();
+		rapidjson::Value val;
+		OBJ_ADD_STR_MEMBER(root, "OfflineInstrImei", strImei);
+		OBJ_ADD_STR_MEMBER(root, "GgwEndpoint", strGgwEnd);
+		root.Accept(writer);
+		std::string strSendDown = strbuf.GetString();
+
+		SendMsgToDownlinkByGMQ(devId,strSendDown.c_str(),strSendDown.size());
+	}
+	else
+	{
+		MYLOG_DEBUG(logger,"found no offline instrcution for strImei[%s]", strImei.c_str());
+	}
+
+	if (*(uint8_t*)&str[3] == 0xA2)
+	{
+		return SendOfflineRplToGgw(hasOfflineInstr, imei);
+	}
+
+	return true;
+}
+```
+
+- downlink收到gpp的消息后，再次将其放入sendmap，以及m_onlineMsgVec，之后发送具体的指令(0x5858包)给ggw。
+```
+if (isOfflineInstruction(m_msg))
+{
+    //触发离线指令下发（在离线指令全切换到保存在GGW中后，只有在线指令的下发会触发这个逻辑）
+    GetJsonStringItem(m_msg,"OfflineInstrImei",strImei);
+    uint32_t devId = 0;
+    if (!GetDevId(strImei, &devId, m_gudPrx, m_pRedisClient))
+    {
+        MYLOG_WARN(logger, "cannot find device id for imei[%s]", strImei.c_str());
+        continue;
+    }
+
+    std::string strGgwEnd;
+    if (GetJsonStringItem(m_msg,"GgwEndpoint",strGgwEnd))
+    {
+        SetGgwEnd(strImei, strGgwEnd);
+    }
+    else
+    {					
+        SetGgwEnd(strImei, EMPTY_GGW_IP);
+    }
+
+    std::string strKey = "gpsbox:OffLineInstr:" + strImei;
+    std::string strInst = GetInstrFromRedis(strKey);
+    if (strInst.empty())
+    {
+        MYLOG_DEBUG(logger,"empty off line instruction for imei[%s] in redis", strImei.c_str());
+        continue;
+    }
+
+    std::string strSn;
+    if (GetJsonStringItem(strInst,"sn",strSn))
+    {
+        MYLOG_DEBUG(logger,"instruction get for imei[%s], devId[%d], sn is [%s]", strImei.c_str(), devId, strSn.c_str());
+
+        instrInfo stInstrInfo = {strInst, (uint64_t)time(0), "OFFLINE"};
+
+        MYLOG_INFO(logger, "rayjay set send map for %ld", devId);
+        SetSendMap(devId, stInstrInfo);
+
+        std::string strType = GetDevType(strImei, devId);
+        StringSeq::iterator fIter = find(g_conf.commonInstrDevType.begin(), g_conf.commonInstrDevType.end(), strType);
+        if (fIter != g_conf.commonInstrDevType.end())
+        {
+            m_commonInstrVec.push_back(strInst);
+        }
+        else
+        {
+            IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(m_mutex_online);
+            m_onlineMsgVec.push_back(strInst);
+            m_mutex_online.notify();
+        }
+    }
+}
+```
+
+- ggw收到0x5858包，将其发送给设备。
 
 
+- 设备收到了指令之后，正常情况下，会发送0x85包给ggw，ggw将其转发给gpp
 
 
+- gpp收到了0x85设备响应包之后，将消息发送给warning_processor，由其改变t_cmd_history表的status以及response等字段。
+```
+//定时回传和下发调度文本信息downlink回复
+if (uProtId == 0x85)
+{
+    char mqbuf[1024] = {0};
+    std::string strContent = "Responce Succeed!";
+    snprintf(mqbuf, 1023,"0001%%%ld##%d#%s",uDevId, 0, strContent.c_str());
+
+    MYLOG_INFO(vul_logger,"downlink response: %s", mqbuf);
+    std::string mq_string(mqbuf);
+    ::GMQ::StrSeq tbl;
+    tbl.push_back(mqbuf);
+    m_pstConsumerThread->SendMsg2GmqStr(gConfData.vcAlarmCallee[0],tbl);
+}
+```
+
+- downlink的offline线程会检测待发送指令的状态，即t_cmd_history的status字段，如果发现它不等于0之后，将t_off_line_instr表中的status改成1，表示此离线指令已发送成功。
+
+### 问题
+既然所有ggw上都已经缓存了所有的离线指令，那么ggw发现设备上线了之后，直接发送指令给设备就可以了，不应该绕ggw-->gpp-->downlink-->ggw这么一个大圈，其实这个功能也是已经实现了的，但是通过灰度控制了，还没有启用。在目前的灰度机制下，只有百分之一的设备能采用新的机制。
+```
+bool GWReader::SendOfflineInstruction(uint64_t id, int fd, bool isUdp)
+{
+	if (m_cacheBlock == NULL)
+	{
+		MYLOG_ERROR(m_pLogger,"cache block has not been inited");
+		return false;
+	}
 
 
+	uint64_t uiHexImei = HexToDec(ntoh64(id));
+	int gs_dev = greyscale(uiHexImei, GGW_SERVICE_ID_OFFLINE_CMD);
+	if (gs_dev <= 0)
+	{
+		MYLOG_DEBUG(m_pLogger,"imei[%lu] is not in the grey scale", uiHexImei);
+		return true;
+	}
+	
+	MYLOG_DEBUG(m_pLogger,"ready to get off line instruction for imei[%lu], fd[%d]", uiHexImei, fd);
 
+	std::string strCmd;
+	uint32_t sn = 0;
+	if (m_cacheBlock->GetCmd(uiHexImei, sn, strCmd))
+	{
+		if(uiHexImei == g_pTracer->m_tracer.p2)
+		{
+			g_pTracer->DLog("get off line instrution in cacheblock for imei[%lu], sn[%u], fd[%d]", uiHexImei, sn, fd);	 
+		}
+	
+		MYLOG_DEBUG(m_pLogger,"get off line instrution in cacheblock for imei[%lu], fd[%d]", uiHexImei, fd);		
+        hexdump2(0,strCmd,__FILE__, __LINE__);
+		if (isUdp)
+		{			
+			sendto(g_udpfd, &strCmd[0], strCmd.size(), 0, (struct sockaddr *)&m_stClient, sizeof(struct sockaddr_in));
+		}
+		else
+		{
+            if (writen(fd, (const void *)&strCmd[0], strCmd.size()) != strCmd.size())
+            {
+				if(uiHexImei == g_pTracer->m_tracer.p2)
+				{
+					g_pTracer->DLog("SendOfflineInstruction failed: WRITE_CTRL_ERROR cfd = %d", fd);	 
+				}
+			
+                MYLOG_WARN(m_pLogger, "SendOfflineInstruction failed: WRITE_CTRL_ERROR cfd = %d", fd);
+                return false;
+            }		
+		}
+	}
+	else
+	{
+		if(uiHexImei == g_pTracer->m_tracer.p2)
+		{
+			g_pTracer->DLog("cannot find off line instruction in cache block for imei[%lu], fd[%d]", uiHexImei, fd);	 
+		}
+	
+		MYLOG_DEBUG(m_pLogger,"cannot find off line instruction in cache block for imei[%lu], fd[%d]", uiHexImei, fd);
+		return false;
+	}
 
+	if(uiHexImei == g_pTracer->m_tracer.p2)
+	{
+		g_pTracer->DLog("SendOfflineInstruction successfully: imei[%lu]", uiHexImei);	 
+	}
 
-
-
-
-
-
+	NotifyDonwlink(id);
+	return true;
+}
+```
 
 
 # GFS
