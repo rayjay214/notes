@@ -55,6 +55,9 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 ### 换行替换成comma
 `cat input.txt | tr '\n' ','`
 
+### 每一行前后都加个双引号
+awk '{ print "\""$0"\""}' inputfile
+
 ### double quote to comma, then eliminate the whitespace
 `cat wireless.txt |tr '"' ' '|tr -d ' '`
 
