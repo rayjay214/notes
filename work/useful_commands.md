@@ -22,6 +22,9 @@ find . -name "*reload*" | xargs sed -i -e 's/\/data\/carol/\/home\/common\/lite/
 ## replace content in files
 `sed -i -e 's/192.168.1.41/192.168.1.43/g' *.cfg`
 
+## remove line with specific str
+`sed -i '/pattern to match/d' ./infile`
+
 ## 计算access_token的步骤
 加密的签名，算法为:md5(md5(经销商账号的密码) + time)，md5值使用32位小写字符串<br>
 用date +%s得到当前的时间戳<br>
