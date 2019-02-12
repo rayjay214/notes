@@ -908,6 +908,41 @@ bool GWReader::SendOfflineInstruction(uint64_t id, int fd, bool isUdp)
 }
 ```
 
+# 运维
+## gmq跨机房推送
+公共组件内部模块要对另一个公共组件内部模块推送数据时, 比如支付BO(PAY_BO), 通过两个gmq转发消息, 两个gmq分别配置为to_proxy(布署在发送方的接口机上), 和as_proxy(布署在接收方的接口机上).
+发送方在配置文件中配置to_proxy对应的gmq的IP与端口.在caller所属gns中配置caller为调用方, 比如PAY_BO, callee为gmq,比如GOOCAR_GMQ_PROXY.  
+callee所属gns中配置caller为调用方, 比如PAY_BO, callee为被调方,比如CAROL_IOT_CARDPOOL_BO. (注意, GOOCAR_GMQ_PROXY所在机器, 要添加caller,否则调用关系无法同步到这台机器上,这时会对caller作为被调时产生干扰, 如果caller要作为被调, 必须使用不同的GNS名)
+
+### 例子，dc_114的user_servant_bo推送消息到dc7_132的carol_log_record服务
+dj_114上user_servant_bo的配置如下
+```
+LOGRECORD_GMQ_ENDPOINT=192.168.2.131:22334 (gmq_to_proxy)
+LOGRECORD_CALLER=COMMON_LOGRECORD_PROXY
+LOGRECORD_CALLEE=CAROL_LOG_RECORD
+```
+servant_bo将数据写入dj接口机的gmq_to_proxy中去。写入此gmq中的消息的caller为COMMON_LOGRECORD_PROXY，callee为CAROL_LOG_RECORD
+dj相关gns配置如下。
+```
+COMMON_LOGRECORD_PROXY-->CAROL_LOG_RECORD
+COMMON_LOGRECORD_PROXY-->COMMON_GMQ_DJ2DC_1
+```
+gmq_to_proxy接收到的消息中，虽然callee配置为CAROL_LOG_RECORD，但是由于配置项gmq.proxyname=COMMON_GMQ_DJ2DC_1，gmq会将消息推送到COMMON_GMQ_DJ2DC_1(dc_131,gmq as proxy)。COMMON_GMQ_DJ2DC_1配置为183.60.142.149:22335, 由于是dj发往dc，所以这里要配置成公网ip，通过查看在物理机器上执行sudo iptables -L -nv -t nat |grep 22335可以看到
+`1003K   60M DNAT       tcp  --  em1    *       113.105.139.0/24     0.0.0.0/0            tcp dpt:22335 to:10.0.1.131:22335`
+这表明113.105.139.0子网发往dc_199:22335的消息都被转发到了dc_131:22335，这里正是部署dc机房gmq_as_proxy的位置。
+dc的gns配置如下。
+```
+COMMON_LOGRECORD_PROXY(192.168.1.131:0)
+COMMON_LOGRECORD_PROXY-->CAROL_LOG_RECORD
+```
+gmq_as_proxy接收到消息之后，消息的caller，callee仍然是之前的COMMON_LOGRECORD_PROXY，CAROL_LOG_RECORD，此时gmq_as_proxy就可以把消息推送到CAROL_LOG_RECORD了。
+
+#### hint
+gns的t_service_node中要配置COMMON_LOGRECORD_PROXY(192.168.1.131:0)，是因为要在131机器的GNS共享内存中生成COMMON_LOGRECORD_PROXY-->CAROL_LOG_RECORD这条记录，不然GMQ不知道要往哪里推送。
+
+#### 疑问
+gmq_as_proxy配置了proxy.name=COMMON_GMQ_PROXY, 并且GNS还配置了COMMON_GMQ_PROXY-->CAROL_LOG_RECORD, 不知道有什么作用。
+
 
 # GFS
 
