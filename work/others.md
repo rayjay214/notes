@@ -7,6 +7,7 @@
 -  #表示书签 %23  
 -  &参数间的分隔符 %26  
 -  =指定参数的值 %3D
+[所有特殊字符一览](https://stackoverflow.com/questions/6182356/what-is-2c-in-a-url)
 
 
 ## 关于字节，字符，编码
