@@ -19,7 +19,7 @@
 - 安装vimdiff yum install vim-enhanced
 
 ## C++ 打印文件名行号宏
-[示例](https://blog.csdn.net/u013187074/article/details/78874976)
+[示例](https://blog.csdn.net/u013187074/article/details/78874976)<br>
 [__VA_ARGS__](https://blog.csdn.net/cqupt_chen/article/details/8055215)
 ```
 #define DBG_OUTPUT(fmt,args...) printf("CK File[%s:%s(%d)]:" fmt "\n", __FILE__,__FUNCTION__, __LINE__, ##args)
