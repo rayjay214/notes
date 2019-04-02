@@ -944,6 +944,71 @@ gns的t_service_node中要配置COMMON_LOGRECORD_PROXY(192.168.1.131:0)，是因
 gmq_as_proxy配置了proxy.name=COMMON_GMQ_PROXY, 并且GNS还配置了COMMON_GMQ_PROXY-->CAROL_LOG_RECORD, 不知道有什么作用。
 
 
+# 设备接入层
+
+## 基础
+
+### 二进制（16进制）数据流和字符串之间的转换
+我们定位问题时常说的原始数据就是二进制数据的16进制表示，但其实在代码中，数据是存储在string中的。string是由很多char组成的，其中每一个char的值，就是16进制的值。比如原始数据是2A 13，那实际存储的情况就是str[0]=42, str[1]=19。这种情况下，想通过string来查看原始数据，是不能通过cout打印string的值来实现的，因为cout会将string以ascii码的形式展示出来，如刚才的str打印出来结果就是*(设备控制3)。要想打印原始数据，需通过hexdump函数。
+```
+void hexdump(uint8_t* buf, int len)
+{
+    char myBuf[1024] = {0};
+
+    if (len > 341)  // 341=1024/3: To avoid overflow
+        len = 341;
+    
+    for (int i = 0; i < len; i++)
+        sprintf(myBuf+3*i, "%02x ", buf[i]);
+
+    MYLOG_INFO(logger, myBuf);
+}
+
+std::string strHex;
+hexdump((uint8_t*)&strHex, strHex.size());
+```
+在测试程序中，有很多这样的场景，已知原始数据，如果将其保存在string中，可以使用如下的程序。
+```
+int StringHexToDec(const std::string& strHex)
+{
+    int result = 0;
+	for (int i = 0; i < (int)(strHex.size()); i++)
+	{
+		int index = strHex.size()-1-i;
+		if (strHex[index] >= '0' && strHex[index] <= '9')
+		{
+			result += (int)(strHex[index] - '0')*pow(16,i);
+		}
+		else if (strHex[index] >= 'A' && strHex[index] <= 'F')
+		{
+			result += (int)(strHex[index] - 'A' + 10)*pow(16,i);
+		}
+		else if (strHex[index] >= 'a' && strHex[index] <= 'f')
+		{
+			result += (int)(strHex[index] - 'a' + 10)*pow(16,i);
+		}
+	}
+
+    return result;
+}
+
+std::string LongStringHexToStringDec(const std::string& strHex)
+{
+    string strResult;
+    string strFirst;
+    char c;
+    for(string::size_type i = 0; i < strHex.size(); i+=2)
+    {   
+        strFirst = strHex.substr(i, 2); 
+        c = StringHexToDec(strFirst);
+        strResult.push_back(c);
+    }   
+    return strResult;
+}
+```
+
+
+
 # GFS
 
 ## GFS简介
