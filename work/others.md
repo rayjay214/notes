@@ -15,8 +15,30 @@
 [字节，字符，编码问题](http://www.regexlab.com/zh/encoding.htm)
 
 ## VIM RELATED
+### 问题
+- 安装vimdiff: yum install vim-enhanced
+- vim ctag不能跳转：将.也当成单词的一部分了，所以跳转的时候提示找不到tag，在~/.vimrc中将set iskeyword+=. 这行注释
+[好用的vim配置](https://github.com/amix/vimrc)
 
-- 安装vimdiff yum install vim-enhanced
+
+### 视图
+- show tags : :Tlist
+- show files and directories: :NERDTree
+- 进入原样粘贴模式 : :paste
+
+### 操作
+- jump to defination : ctrl + ]
+- 复制单词：光标放在单词上面，按#或者*即可
+- 删除当前光标下的字符 ：x
+- 删除光标之后的单词剩余部分 ：dw
+- 删除光标之后的该行剩余部分 ：d$
+- 删除当前行 ：dd
+- 删除当前行，进入INSERT MODE
+
+
+### 配置
+- 高亮显示当前列 ：set cuc
+
 
 ## C++ 打印文件名行号宏
 [示例](https://blog.csdn.net/u013187074/article/details/78874976)<br>
