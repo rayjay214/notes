@@ -451,6 +451,12 @@ std::string retRedirect(const std::string path, const std::string host, bool axa
 }
 ```
 
+# Tracelog
+
+## 杂记
+浏览器通过tracecgi发送配置信息到logproxy，包含的信息有要监控服务的ip:port，以及浏览器生成的session_id。logproxy收到配置信息后，调用CConfigInfo::Set(const string& ip, int port, const ::Log::cfg2& c, SessionType stype)，将配置信息保存在缓存中，此处如果配置信息存在（ip,port,session_id,p1,p2,p3都一样），则更新配置，否则新增配置信息。缓存更新完成
+
+
 # 设备协议相关
 
 ## 离线指令发送流程
