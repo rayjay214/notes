@@ -18,7 +18,7 @@
 ### 问题
 - 安装vimdiff: yum install vim-enhanced
 - vim ctag不能跳转：将.也当成单词的一部分了，所以跳转的时候提示找不到tag，在~/.vimrc中将set iskeyword+=. 这行注释
-[好用的vim配置](https://github.com/amix/vimrc)
+- [好用的vim配置](https://github.com/amix/vimrc)
 
 
 ### 视图
