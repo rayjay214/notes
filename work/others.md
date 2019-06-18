@@ -34,7 +34,7 @@
 - 删除光标之后的该行剩余部分 ：d$
 - 删除当前行 ：dd
 - 删除当前行，进入INSERT MODE
-
+- 单字符全局替换  :%s/old/new/g [reference](https://www.linux.com/learn/vim-tips-basics-search-and-replace)
 
 ### 配置
 - 高亮显示当前列 ：set cuc
