@@ -20,4 +20,5 @@ $1 refers to the first capturing group (...). When you added another group it re
 ## http related
 
 ### 跨域(cors)
-[跨域的解释](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+- This means that a web application using those APIs can only request HTTP resources from the same origin the application was   loaded from, unless the response from the other origin includes the right CORS headers.
+- [详细解释](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
