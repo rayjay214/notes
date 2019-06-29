@@ -15,3 +15,9 @@ location ~/photos/resize/(?<width>(\d+))/(?<height>(\d+)) {
 }
 ```
 $1 refers to the first capturing group (...). When you added another group it referred to that one instead. You can use a non-capturing group (?:...) instead, or refer to the second capturing group $2
+
+
+## http related
+
+### 跨域(cors)
+[跨域的解释](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
