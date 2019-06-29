@@ -22,3 +22,29 @@ $1 refers to the first capturing group (...). When you added another group it re
 ### 跨域(cors)
 - This means that a web application using those APIs can only request HTTP resources from the same origin the application was   loaded from, unless the response from the other origin includes the right CORS headers.
 - [详细解释](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+- nginx支持跨域相关配置
+```
+location / {
+                proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504 http_404;
+                proxy_pass          http://groupall;
+                include             conf/proxy_params;
+                proxy_http_version  1.1;
+                proxy_set_header    Connection "";
+                client_max_body_size 8M;
+
+                if ( $request_method = 'POST' ) {
+                    add_header Access-Control-Allow-Origin "$http_origin";
+                    add_header Access-Control-Allow-Methods POST;
+                    add_header Access-Control-Allow-Headers 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+                    add_header Access-Control-Max-Age 1;
+                    add_header Access-Control-Allow-Credentials false; #false表示请求不允许带cookie
+                }
+                if ( $request_method = 'OPTIONS' ) {
+                    add_header Access-Control-Allow-Origin "$http_origin";
+                    add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS';
+                    add_header Access-Control-Allow-Headers 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+                    add_header Access-Control-Max-Age 1;
+                    add_header Access-Control-Allow-Credentials false; 
+                }
+        }
+```
