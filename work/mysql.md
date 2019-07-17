@@ -55,6 +55,26 @@ WHERE NOT EXISTS(
 LIMIT 1
 ```
 
+## 通过select执行insert并修改某些其中某些值
+```
+INSERT INTO keyword_history 
+(
+   keyword_id, 
+   searchengine, 
+   location, 
+   rec_date, 
+   currentrank
+) 
+SELECT  keyword_id, 
+        searchengine, 
+        location,
+        curdate(),
+        '4' 
+FROM    keyword_history 
+WHERE   history_id = 21;
+```
+
+
 # 维护相关
 ## 多实例(端口)启动
 - 查看实例运行状态: /usr/local/mysql/bin/mysqld_multi report
