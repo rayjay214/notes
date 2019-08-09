@@ -28,3 +28,33 @@ mymap.erase(it++);
 ```
 
 This works because the post-increment side-effect of it++ happens before erase() deletes the element. Since this is maybe not immediately obvious, the C++11 variant above should be preferred.
+
+## socket read/write segment
+```
+while (1) {
+    // Read data into buffer.  We may not have enough to fill up buffer, so we
+    // store how many bytes were actually read in bytes_read.
+    int bytes_read = read(input_file, buffer, sizeof(buffer));
+    if (bytes_read == 0) // We're done reading from the file
+        break;
+
+    if (bytes_read < 0) {
+        // handle errors
+    }
+
+    // You need a loop for the write, because not all of the data may be written
+    // in one call; write will return how many bytes were written. p keeps
+    // track of where in the buffer we are, while we decrement bytes_read
+    // to keep track of how many bytes are left to write.
+    void *p = buffer;
+    while (bytes_read > 0) {
+        int bytes_written = write(output_socket, p, bytes_read);
+        if (bytes_written <= 0) {
+            // handle errors
+        }
+        bytes_read -= bytes_written;
+        p += bytes_written;
+    }
+}
+```
+[refer](https://stackoverflow.com/questions/2014033/send-and-receive-a-file-in-socket-programming-in-linux-with-c-c-gcc-g)
