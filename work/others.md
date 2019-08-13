@@ -34,7 +34,10 @@
 - 删除光标之后的该行剩余部分 ：d$
 - 删除当前行 ：dd
 - 删除当前行，进入INSERT MODE
-- 单字符全局替换  :%s/old/new/g [reference](https://www.linux.com/learn/vim-tips-basics-search-and-replace)
+- 单字符全局替换  :%s/old/new/g <br> 
+  [reference](https://www.linux.com/learn/vim-tips-basics-search-and-replace)<br>
+  [whole word only](https://stackoverflow.com/questions/1778501/find-and-replace-whole-words-in-vim)
+
 
 ### 配置
 - 高亮显示当前列 ：set cuc
