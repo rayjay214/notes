@@ -50,6 +50,10 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 `diff file2 file1 | grep '^>' | sed 's/^>\ //'`<br>
 `diff --new-line-format="" --unchanged-line-format=""  <(sort file1) <(sort file2)`
 
+## 抓包
+sudo tcpdump -i any port 29999 tcp -Xnpls0 -nn
+
+
 ## bash，时间戳日期转换
 `date -d "2018-02-02 00:00:00" "+%s"`
 `date -d @1519228800`
