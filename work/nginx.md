@@ -48,3 +48,9 @@ location / {
                 }
         }
 ```
+
+### nginx做http正向代理
+- [方法](https://blog.csdn.net/micwing/article/details/84774568)
+- [模块链接](https://github.com/chobits/ngx_http_proxy_connect_module)
+
+
