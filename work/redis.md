@@ -1,4 +1,7 @@
-## 命令相关
+## 维护
 
 ### 批量删除
-`redis-cli KEYS "prefix:*" | xargs redis-cli DEL`
+```
+redis-cli -p 9200 --scan --pattern 'T_MOBILE_PICTURE#*'  >  del_key_result
+cat del_key_result  | xargs ./redis-cli -p 9200  del 
+```
