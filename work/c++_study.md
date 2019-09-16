@@ -7,7 +7,8 @@
 **定义一个函数为纯虚函数，才代表函数没有被实现。<br>**
 定义纯虚函数是为了实现一个接口，起到一个规范的作用，规范继承这个类的程序员必须实现这个函数。
 在基类中实现纯虚函数的方法是在函数原型后加"=0"<br>
-　virtual void funtion1()=0
+　virtual void funtion1()=0<br>
+[理解虚函数表](https://www.jianshu.com/p/64f3b9c22898)
 
 ## erase a element in map
 Erasing an element of a map invalidates iterators pointing to that element (after all that element has been deleted). You shouldn't reuse that iterator.
