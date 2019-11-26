@@ -22,9 +22,9 @@
 
 
 ### 视图
-- show tags : :Tlist
-- show files and directories: :NERDTree
-- 进入原样粘贴模式 : :paste
+- show tags, :Tlist
+- show files and directories, :NERDTree
+- 进入原样粘贴模式, :paste
 
 ### 操作
 - jump to defination : ctrl + ]
@@ -34,7 +34,8 @@
 - 删除光标之后的该行剩余部分 ：d$
 - 删除当前行 ：dd
 - 删除当前行，进入INSERT MODE
-- 单字符全局替换  :%s/old/new/g <br> 
+- 单字符全局替换  :%s/old/new/g <br>
+- 批量缩进反缩进: shift+v进入可视模式，选中内容，shift+>/<
   [reference](https://www.linux.com/learn/vim-tips-basics-search-and-replace)<br>
   [whole word only](https://stackoverflow.com/questions/1778501/find-and-replace-whole-words-in-vim)
 
