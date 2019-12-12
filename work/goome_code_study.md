@@ -1012,7 +1012,21 @@ std::string LongStringHexToStringDec(const std::string& strHex)
     return strResult;
 }
 ```
-
+解析ascii string，根据长度以及结束符（'\0'），提取到目标string中去
+```
+std::string ArrayStrToString(const char * pArrayStr, size_t udwStrBufSize)
+{
+    std::string strRet;
+    for (unsigned int i = 0; i < udwStrBufSize; ++i)
+    {
+        if(pArrayStr[i] != '\0')
+        {
+            strRet += pArrayStr[i];
+        }
+    }
+    return strRet;
+}
+```
 
 
 # GFS
