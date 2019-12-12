@@ -63,7 +63,7 @@ sudo tcpdump -i any port 29999 tcp -Xnpls0 -nn
 `cat input.txt | tr '\n' ','`
 
 ### 每一行前后都加个双引号
-awk '{ print "\""$0"\""}' file
+```awk '{ print "\""$0"\""}' file```
 
 ### double quote to comma, then eliminate the whitespace
 `cat wireless.txt |tr '"' ' '|tr -d ' '`
