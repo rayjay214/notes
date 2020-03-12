@@ -1,2 +1,4 @@
-[主动关闭端2msl timewait的原因](https://blog.csdn.net/u011673554/article/details/48457561)<br>
-[同步异步，阻塞非阻塞的概念](https://blog.csdn.net/z_ryan/article/details/80873449)
+- [主动关闭端2msl timewait的原因](https://blog.csdn.net/u011673554/article/details/48457561)
+- [同步异步，阻塞非阻塞的概念](https://blog.csdn.net/z_ryan/article/details/80873449)
+- [tcp详解](https://blog.csdn.net/dog250/article/details/6612496)
+- [udp详解](http://blog.csdn.net/dog250/article/details/6896949)
