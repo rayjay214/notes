@@ -2,3 +2,5 @@
 - [同步异步，阻塞非阻塞的概念](https://blog.csdn.net/z_ryan/article/details/80873449)
 - [tcp详解](https://blog.csdn.net/dog250/article/details/6612496)
 - [udp详解](http://blog.csdn.net/dog250/article/details/6896949)
+- [为什么会有字节序](https://www.ruanyifeng.com/blog/2016/11/byte-order.html)
+- [map reduce简单解释](https://blog.csdn.net/qq_35078688/article/details/83240661)
