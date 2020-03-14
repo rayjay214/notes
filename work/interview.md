@@ -4,3 +4,7 @@
 - [udp详解](http://blog.csdn.net/dog250/article/details/6896949)
 - [为什么会有字节序](https://www.ruanyifeng.com/blog/2016/11/byte-order.html)
 - [map reduce简单解释](https://blog.csdn.net/qq_35078688/article/details/83240661)
+- [数据库详解](https://www.jianshu.com/p/d9389f27ca1a)
+- [http常见字段](https://blog.csdn.net/ajdfhajdkfakr/article/details/78073580)
+- [tcp报文常见字段](https://blog.csdn.net/jason_zjj/article/details/54563446)
+- [C++单例模式](https://www.cnblogs.com/sunchaothu/p/10389842.html)
