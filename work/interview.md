@@ -8,3 +8,4 @@
 - [http常见字段](https://blog.csdn.net/ajdfhajdkfakr/article/details/78073580)
 - [tcp报文常见字段](https://blog.csdn.net/jason_zjj/article/details/54563446)
 - [C++单例模式](https://www.cnblogs.com/sunchaothu/p/10389842.html)
+- [隔离级别及MVCC机制](https://www.jianshu.com/p/563612576e6e)
