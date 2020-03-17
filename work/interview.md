@@ -14,6 +14,7 @@
 ## 算法
 - [计数排序](https://www.runoob.com/w3cnote/counting-sort.html)
 - [二叉树最近公共节点](https://blog.csdn.net/qq_28114615/article/details/85715017)
+- [二叉树序列化反序列化](https://blog.csdn.net/YF_Li123/article/details/70237074)
 
 ## 编程
 - [C++单例模式](https://www.cnblogs.com/sunchaothu/p/10389842.html)
