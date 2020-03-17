@@ -17,3 +17,9 @@
 
 ## 编程
 - [C++单例模式](https://www.cnblogs.com/sunchaothu/p/10389842.html)
+
+
+## 问题
+- 更新数据库的时候，如果保证redis和数据库同步(binlog没有被redisworker收到的间隙时间)
+- redis cache miss，数据大量回源，数据库崩溃，这种场景如何处理
+- 在对方知道imei号和协议的情况下，如何防止对系统的攻击
