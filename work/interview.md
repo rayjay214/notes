@@ -10,6 +10,7 @@
 - [tcp报文常见字段](https://blog.csdn.net/jason_zjj/article/details/54563446)
 - [隔离级别及MVCC机制](https://www.jianshu.com/p/563612576e6e)
 - [volatile的作用](https://blog.csdn.net/haoren001/article/details/14606125)
+- [epoll和select的实现原理，并发量低且活跃句柄较多的场景下select性能可能更好](https://www.jianshu.com/p/f28cb63ce1da)
 
 ## 算法
 - [计数排序](https://www.runoob.com/w3cnote/counting-sort.html)
