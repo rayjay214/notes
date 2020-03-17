@@ -22,5 +22,7 @@
 ## 问题
 - 更新数据库的时候，如果保证redis和数据库同步(binlog没有被redisworker收到的间隙时间)<br>
   [先删缓存，在改数据库，还要通过队列保证改数据库在读之前](https://blog.csdn.net/gly1256288307/article/details/88739612)
-- redis cache miss，数据大量回源，数据库崩溃，这种场景如何处理
-- 在对方知道imei号和协议的情况下，如何防止对系统的攻击
+- redis cache miss，数据大量回源，数据库崩溃，这种场景如何处理<br>
+  [缓存穿透，缓存击穿，缓存雪崩](https://blog.csdn.net/kongtiao5/article/details/82771694)
+- 在对方知道imei号和协议的情况下，如何防止对系统的攻击<br>
+  协议加密？
