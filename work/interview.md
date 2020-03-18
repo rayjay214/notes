@@ -12,6 +12,7 @@
 - [volatile的作用](https://blog.csdn.net/haoren001/article/details/14606125)
 - [epoll和select的实现原理，并发量低且活跃句柄较多的场景下select性能可能更好](https://www.jianshu.com/p/f28cb63ce1da)
 - [进程通信的几种方式及优缺点](https://cloud.tencent.com/developer/article/1496658)
+- [线程间同步的方式](https://www.cnblogs.com/WindSun/p/11441234.html)
 
 ## 算法
 - [计数排序](https://www.runoob.com/w3cnote/counting-sort.html)
@@ -29,3 +30,4 @@
   [缓存穿透，缓存击穿，缓存雪崩](https://blog.csdn.net/kongtiao5/article/details/82771694)
 - 在对方知道imei号和协议的情况下，如何防止对系统的攻击<br>
   协议加密？
+- redis访问qps是多少<br>
