@@ -13,6 +13,7 @@
 - [epoll和select的实现原理，并发量低且活跃句柄较多的场景下select性能可能更好](https://www.jianshu.com/p/f28cb63ce1da)
 - [进程通信的几种方式及优缺点](https://cloud.tencent.com/developer/article/1496658)
 - [线程间同步的方式](https://www.cnblogs.com/WindSun/p/11441234.html)
+- [redis setnx实现分布式锁](https://www.jianshu.com/p/a1ebab8ce78a)
 
 ## 算法
 - [计数排序](https://www.runoob.com/w3cnote/counting-sort.html)
