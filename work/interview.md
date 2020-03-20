@@ -1,6 +1,7 @@
 ## 知识
 - [主动关闭端2msl timewait的原因](https://blog.csdn.net/u011673554/article/details/48457561)
 - [同步异步，阻塞非阻塞的概念](https://blog.csdn.net/z_ryan/article/details/80873449)
+- [同步异步，阻塞非阻塞的概念_2](https://www.cnblogs.com/loveer/p/11479249.html)
 - [tcp详解](https://blog.csdn.net/dog250/article/details/6612496)
 - [udp详解](http://blog.csdn.net/dog250/article/details/6896949)
 - [为什么会有字节序](https://www.ruanyifeng.com/blog/2016/11/byte-order.html)
