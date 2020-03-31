@@ -16,6 +16,7 @@
 - [线程间同步的方式](https://www.cnblogs.com/WindSun/p/11441234.html)
 - [redis setnx实现分布式锁](https://www.jianshu.com/p/a1ebab8ce78a)
 - [fopen和open](https://blog.csdn.net/oscarjulia/article/details/72638060)
+- [原码，反码，补码](https://www.cnblogs.com/zhangziqiu/archive/2011/03/30/computercode.html)
 
 ## 算法
 - [计数排序](https://www.runoob.com/w3cnote/counting-sort.html)
