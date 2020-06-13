@@ -52,3 +52,12 @@
 DBG_OUTPUT("j[%d]k[%d]", j, k);
 /* printf("CK File[%s:%s(%d)]:" "j[%d]k[%d]" "\n", __FILE__, __FUNCTION__, __LINE__, j, k) */
 ```
+
+## scons编译问题解决
+scons: *** [SConstruct] ValueError : unsupported pickle protocol: 4<br>
+python2和python3不能混用，比如之前用python3编译，再用python2编译就会报这个错误，解决：删除.sconsign.dblite文件<br><br>
+unknown pseudo-op: `.cfi_startproc', 报很多类似这样的错误<br>
+汇编器（/usr/bin/as）的版本太低，解决：参照以下两个链接<br>
+[原因](https://stackoverflow.com/questions/8872517/g-4-6-1-compiler-error-error-unknown-pseudo-op-cfi-personality)<br>
+[升级binutil](https://blog.csdn.net/u011334738/article/details/81186345)<br>
+
