@@ -61,3 +61,9 @@ unknown pseudo-op: `.cfi_startproc', 报很多类似这样的错误<br>
 [原因](https://stackoverflow.com/questions/8872517/g-4-6-1-compiler-error-error-unknown-pseudo-op-cfi-personality)<br>
 [升级binutil](https://blog.csdn.net/u011334738/article/details/81186345)<br>
 
+## ICE编译问题解决
+下载源码包安装，如果直接去make，是不能支持C++11的，需要在make的时候增加这两个选项make CXXFLAGS=-std=c++11 CONFIGS=cpp11-shared<br>
+如果碰到Compilation fails with "relocation R_X86_64_32 against `.rodata.str1.8' can not be used when making a shared object"，这类问题，需要编译的时候增加-fPIC选项 make CXXFLAGS="-std=c++11 -fPIC"<br>
+如果碰到undefined reference to symbol 'pthread_create@@GLIBC_2.2.5', 需要加上 -pthread CXXFLAGS="-std=c++11 -fPIC -pthread"<br>
+[refer](https://doc.zeroc.com/ice/3.6/ice-release-notes/using-the-linux-binary-distributions#UsingtheLinuxBinaryDistributions-C++)
+
