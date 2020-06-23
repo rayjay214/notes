@@ -1,3 +1,7 @@
+# 背景相关
+[官方版本，Percona，MariaDB之间的关系](https://www.cnblogs.com/wish123/p/11270851.html)
+
+
 # sql related
 
 ## 增加权限
