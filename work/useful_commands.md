@@ -53,6 +53,10 @@ FiddlerObject.UI.lvSessions.AddBoundColumn("Server IP", 120, "X-HostIP");
 ## 抓包
 sudo tcpdump -i any port 29999 tcp -Xnpls0 -nn
 
+## 复制软链接
+本地：cp -d <br>
+远程：rsync -Wav
+
 
 ## bash，时间戳日期转换
 `date -d "2018-02-02 00:00:00" "+%s"`
