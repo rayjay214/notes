@@ -1,6 +1,10 @@
 ## C++11
 [教程](https://changkun.de/modern-cpp/zh-cn/05-pointers/index.html)
 
+## 编译问题
+- [Include issue: 'multiple definition', 'first defined here'](https://stackoverflow.com/questions/45667393/include-issue-multiple-definition-first-defined-here)
+- [循环引用问题](https://blog.csdn.net/stockholmrobber/article/details/81161546)
+
 ## Initializer List
 [details](https://www.geeksforgeeks.org/when-do-we-use-initializer-list-in-c/)
 
