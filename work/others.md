@@ -71,4 +71,5 @@ unknown pseudo-op: `.cfi_startproc', 报很多类似这样的错误<br>
 [refer](https://doc.zeroc.com/ice/3.6/ice-release-notes/using-the-linux-binary-distributions#UsingtheLinuxBinaryDistributions-C++)
 
 ## 亿赛通破解
-把cpp文件改成hpp后缀，拷贝到git目录下，用vscode打开这个目录，再提交到github上
+把cpp文件改成hpp后缀，拷贝到git目录下，用vscode打开这个目录，再提交到github上   
+有时可能拷贝过来的文件就是乱码，这时只能新建一个xxx.hpp文件，然后在vscode里面将内容拷贝过去，然后提交xxx.hpp
