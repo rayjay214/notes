@@ -70,3 +70,5 @@ unknown pseudo-op: `.cfi_startproc', 报很多类似这样的错误<br>
 如果碰到undefined reference to symbol 'pthread_create@@GLIBC_2.2.5', 需要加上 -pthread CXXFLAGS="-std=c++11 -fPIC -pthread"<br>
 [refer](https://doc.zeroc.com/ice/3.6/ice-release-notes/using-the-linux-binary-distributions#UsingtheLinuxBinaryDistributions-C++)
 
+## 亿赛通破解
+把cpp文件改成hpp后缀，拷贝到git目录下，用vscode打开这个目录，再提交到github上
