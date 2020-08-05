@@ -1,5 +1,6 @@
 ## C++11
-[教程](https://changkun.de/modern-cpp/zh-cn/05-pointers/index.html)
+[教程](https://changkun.de/modern-cpp/zh-cn/05-pointers/index.html)  
+[新特性总结](https://zhuanlan.zhihu.com/p/139515439)
 
 ## 编译问题
 - [Include issue: 'multiple definition', 'first defined here'](https://stackoverflow.com/questions/45667393/include-issue-multiple-definition-first-defined-here)
