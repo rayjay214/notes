@@ -2,6 +2,24 @@
 [教程](https://changkun.de/modern-cpp/zh-cn/05-pointers/index.html)  
 [新特性总结](https://zhuanlan.zhihu.com/p/139515439)
 
+### 智能指针
+非智能指针, 第一次申请的空间不会被释放
+```
+int * ptr = new int; //第一次申请空间
+*ptr = 5;
+// ... do some stuff here
+ptr = new int; //第二次申请空间
+// ... reuse ptr to do some other stuff
+```
+智能指针  
+```
+shared_ptr<int> ptr = make_shared<int>();   // allocate an int
+*ptr = 5;
+// ... do some stuff here
+ptr = make_shared<int>();  // the old object is no longer used so deleted automatically
+// ... reuse ptr to do some other stuff
+```
+
 ## 编译问题
 - [Include issue: 'multiple definition', 'first defined here'](https://stackoverflow.com/questions/45667393/include-issue-multiple-definition-first-defined-here)
 - [循环引用问题](https://blog.csdn.net/stockholmrobber/article/details/81161546)
