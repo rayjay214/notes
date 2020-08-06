@@ -134,3 +134,18 @@ slxk::SLXKUserDao::___AddUser(::IceInternal::Incoming& __inS, const ::Ice::Curre
 ```
 以上的修改点就在于，read(req)的时候捕获异常，比如此时客户端传来的pb和服务端的有冲突，这里就可以防止服务端挂掉。  
 另一个修改点就是当发生异常的时候，在响应中构建服务端此时的pb结构供客户端去解析。
+
+## Protobuf
+### 几个关键类的作用
+- [Descriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)  
+You can use a message's descriptor to learn at runtime what fields it contains and what the types of those fields are.
+获取该Message所在的proto文件类: const FileDescriptor * file() const
+
+- [FileDescriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)  
+To get the FileDescriptor for a compiled-in file, get the descriptor for something defined in that file and call descriptor->file().
+
+- [Message](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message)  
+获取Message的descriptor：const Descriptor* descriptor = foo->GetDescriptor();  
+获取message某一个field的descriptor: const FieldDescriptor* text_field = descriptor->FindFieldByName("text");  
+获取message的反射类（可以用来查看每个字段的具体值）：const Reflection* reflection = foo->GetReflection();  
+根据反射类获取某个字段的值: assert(reflection->FieldSize(*foo, numbers_field) == 3);  
