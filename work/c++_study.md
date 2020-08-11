@@ -1,7 +1,7 @@
 ## C++11
 [教程](https://changkun.de/modern-cpp/zh-cn/05-pointers/index.html)  
-[新特性总结](https://zhuanlan.zhihu.com/p/139515439)
-[右值引用，转移，完美转发等](https://zhuanlan.zhihu.com/p/107445960)
+[新特性总结](https://zhuanlan.zhihu.com/p/139515439)  
+[右值引用，转移，完美转发等](https://zhuanlan.zhihu.com/p/107445960)  
 
 ### 智能指针
 非智能指针, 第一次申请的空间不会被释放
