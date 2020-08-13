@@ -26,6 +26,10 @@ ptr = make_shared<int>();  // the old object is no longer used so deleted automa
 - [Include issue: 'multiple definition', 'first defined here'](https://stackoverflow.com/questions/45667393/include-issue-multiple-definition-first-defined-here)
 - [循环引用问题](https://blog.csdn.net/stockholmrobber/article/details/81161546)
 
+### 前向声明
+简化头文件的依赖关系，避免暴露内部类  
+前向声明某个类之后，只能使用该类的指针和引用，而不能使用对象更不能访问成员，因为根本不知道这个类含有什么东西
+
 ## Initializer List
 [details](https://www.geeksforgeeks.org/when-do-we-use-initializer-list-in-c/)
 
