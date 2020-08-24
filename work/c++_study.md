@@ -21,6 +21,30 @@ shared_ptr<int> ptr = make_shared<int>();   // allocate an int
 ptr = make_shared<int>();  // the old object is no longer used so deleted automatically
 // ... reuse ptr to do some other stuff
 ```
+自定义delete函数，以lambda函数表示，作为shared_ptr构造函数中所需的deleter，示例如下：  
+```
+auto result = std::shared_ptr<const CassResult>(cass_future_get_result(resultFuture.get()), [](CassResult* p) {
+   cass_result_free(p);
+});
+```
+shared_ptr析构部分的部分源码如下：  
+```
+~SharedPointer() { release(); }
+
+template <typename T>
+void SharedPointer<T>::release()
+{
+	if (--*use_c == 0) {
+		if (p) {
+			deleter(p);
+		}
+		delete use_c;
+	}
+	use_c = nullptr;
+	p = nullptr;
+}
+```
+
 
 ## 编译问题
 - [Include issue: 'multiple definition', 'first defined here'](https://stackoverflow.com/questions/45667393/include-issue-multiple-definition-first-defined-here)
