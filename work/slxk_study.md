@@ -137,9 +137,10 @@ slxk::SLXKUserDao::___AddUser(::IceInternal::Incoming& __inS, const ::Ice::Curre
 
 ## Protobuf
 ### 几个关键类的作用
-- [Descriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)  
-You can use a message's descriptor to learn at runtime what fields it contains and what the types of those fields are.
-获取该Message所在的proto文件类: const FileDescriptor * file() const
+- [Descriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)    
+You can use a message's descriptor to learn at runtime what fields it contains and what the types of those fields are.  
+获取该Message所在的proto文件类: const FileDescriptor * file() const  
+除了FileDescriptor，还有FieldDescriptor，它可以知道message某个field的信息，比如他的lable，他的type，他的num等。
 
 - [FileDescriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)  
 To get the FileDescriptor for a compiled-in file, get the descriptor for something defined in that file and call descriptor->file().
@@ -149,3 +150,4 @@ To get the FileDescriptor for a compiled-in file, get the descriptor for somethi
 获取message某一个field的descriptor: const FieldDescriptor* text_field = descriptor->FindFieldByName("text");  
 获取message的反射类（可以用来查看每个字段的具体值）：const Reflection* reflection = foo->GetReflection();  
 根据反射类获取某个字段的值: assert(reflection->FieldSize(*foo, numbers_field) == 3);  
+
