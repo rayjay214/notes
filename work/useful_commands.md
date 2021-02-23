@@ -9,7 +9,13 @@ Z9w+aBeZSbf4uKDN
 将192.168.7.104:5000映射到127.0.0.1:8300
 
 ## 抓包
-`sudo tcpdump -i any port 9089 -Xnpls0 -nn`
+`sudo tcpdump -i any port 9089 -Xnpls0 -nn`  
+-nn: 指定将每个监听到的数据包中的域名转换成IP、端口从应用名称转换成端口号后显示  
+-X: 需要把协议头和包内容都原原本本的显示出来  
+-s snaplen  snaplen表示从一个包中截取的字节数。0表示包不截断，抓完整的数据包。默认的话 tcpdump 只显示部分数据包,默认68字节  
+-l 使标准输出变为缓冲行形式  
+-p 将网卡设置为非混杂模式，不能与host或broadcast一起使用  
+-n 不把网络地址转换成名字  
 
 ## use of xargs
 ```
