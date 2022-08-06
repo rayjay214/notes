@@ -78,6 +78,9 @@ sudo tcpdump -i any port 29999 tcp -Xnpls0 -nn
 ### double quote to comma, then eliminate the whitespace
 `cat wireless.txt |tr '"' ' '|tr -d ' '`
 
+### tcp连接状态数统计
+`netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'`
+
 ## bash操作
 ### 编辑常用快捷键
 ```
