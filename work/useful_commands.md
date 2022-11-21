@@ -62,6 +62,7 @@ sudo tcpdump -i any port 29999 tcp -Xnpls0 -nn
 ## 复制软链接
 本地：cp -d <br>
 远程：rsync -Wav
+远程非22端口: rsync -rvz -e 'ssh -p xxxx' --progress ./dir user@host:/path
 
 
 ## bash，时间戳日期转换
