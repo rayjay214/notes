@@ -135,6 +135,118 @@ slxk::SLXKUserDao::___AddUser(::IceInternal::Incoming& __inS, const ::Ice::Curre
 以上的修改点就在于，read(req)的时候捕获异常，比如此时客户端传来的pb和服务端的有冲突，这里就可以防止服务端挂掉。  
 另一个修改点就是当发生异常的时候，在响应中构建服务端此时的pb结构供客户端去解析。
 
+### 客户端代码
+调用服务端的时候，写两个参数，一个是cookie，一个是objReq
+```
+::Ice::Int
+IceProxy::slxk::SLXKDeviceBo::GetDetail(const ::slxk::SLXKDeviceBoGetDetailReq& __p_objReq, ::slxk::SLXKDeviceBoGetDetailResp& __p_objResp, const ::Ice::Context* __ctx)
+{
+    ZBNS_API::ZBNS_API_RAII report(this, ::slxk::SLXKDeviceBo_PB::eFuncGetDetail_PB);
+    for(int i = 0; i < 3; i++)
+    {
+        __checkTwowayOnly(__slxk__SLXKDeviceBo__GetDetail_name);
+        ::IceInternal::Outgoing __og(this, __slxk__SLXKDeviceBo__GetDetail_name, ::Ice::Normal, __ctx);
+        try
+        {
+            ::IceInternal::BasicStream* __os = __og.startWriteParams(::Ice::DefaultFormat);
+            __os->write(*Comm::GetUserCookie());
+            __os->write(__p_objReq);
+            __og.endWriteParams();
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            report.set_return_code(-1);
+            __og.abort(__ex);
+        }
+        try
+        {
+            if(!__og.invoke())
+            {
+                try
+                {
+                    __og.throwUserException();
+                }
+                catch(const ::Ice::UserException& __ex)
+                {
+                    report.set_return_code(-1);
+                    ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                    throw __uue;
+                }
+            }
+        }
+        catch(const ::Ice::ConnectionLostException& __ex) //如果服务重启或断开会命中此错误
+        {
+            report.set_return_code(-1);
+            if (i >= 2) __ex.ice_throw();
+            usleep(1000 * 1000 * (i+1));
+            continue;
+        }
+        catch(const ::Ice::ConnectionRefusedException& __ex) //如果服务线程不够，再次连接时命中次错误
+        {
+            report.set_return_code(-1);
+            if (i >= 2) __ex.ice_throw();
+            usleep(1000 * 1000 * (i+1));
+            continue;
+        }
+        catch(const ::Ice::InvocationTimeoutException& __ex) //如果服务耗时过长导致超时，或者服务中途退出，导致client调用超时
+        {
+            report.set_return_code(-1);
+            if (i >= 2) __ex.ice_throw();
+            usleep(1000 * 1000 * (i+1));
+            continue;
+        }
+        ::Ice::Int __ret;
+        ::IceInternal::BasicStream* __is = __og.startReadParams();
+        __is->read(__p_objResp);
+        __is->read(__ret);
+        __og.endReadParams();
+        report.set_return_code(__ret);
+        return __ret;
+    }
+    return 0;
+}
+```
+
+### 服务端代码
+执行具体操作之前，从客户端读取传参，首先读出cookie存起来，再读出objReq
+```
+::Ice::DispatchStatus
+slxk::SLXKDeviceBo::___GetDetail(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    ZBNS_API::ZBNS_API_RAII report(__current, ::slxk::SLXKDeviceBo_PB::eFuncGetDetail_PB);
+    __checkMode(::Ice::Normal, __current.mode);
+    ::Ice::Int __ret = 0;
+    ::slxk::SLXKDeviceBoGetDetailReq __p_objReq;
+    ::slxk::SLXKDeviceBoGetDetailResp __p_objResp;
+    try
+    {
+        ::IceInternal::BasicStream* __is = __inS.startReadParams();
+        __is->read(*Comm::GetUserCookie());
+        __is->read(__p_objReq);
+        __inS.endReadParams();
+    }
+    catch(...)
+    {
+        __ret=MMOcComm::LogicError::SLXK_COMMON_STD_EXCEPTION;
+        SKGetPBMetaInfoWithImportedFile(::slxk::SLXKDeviceBoSKBuiltinEmpty(), *__p_objResp.mutable_meta_info());
+    }
+    if(__ret == 0)
+    {
+         __ret = GetDetail(__p_objReq, __p_objResp, __current);
+    }
+    report.set_return_code(__ret);
+    ::IceInternal::BasicStream* __os = __inS.__startWriteParams(::Ice::DefaultFormat);
+    __os->write(__p_objResp);
+    __os->write(__ret);
+    __inS.__endWriteParams(true);
+    return ::Ice::DispatchOK;
+}
+```
+
+### cgi调用
+cgi在调用的时候，相当于ice的客户端，所以在cgi的CallIce函数中，实际上就是执行上面的客户端代码
+
+
 ## Protobuf
 ### 几个关键类的作用
 - [Descriptor](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.descriptor)    
